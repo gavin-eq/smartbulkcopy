@@ -16,15 +16,14 @@ namespace SmartBulkCopy
             int result = 0;
             var logger = LogManager.GetCurrentClassLogger();
             try
-            {
-                SmartBulkCopyConfiguration bulkCopyConfig;
+            {                
+                EngineBase engine;
                 if (args.Length > 0)
-                    bulkCopyConfig = SmartBulkCopyConfiguration.LoadFromConfigFile(args[0]);
+                    engine = new SmartBulkCopy(args[0], logger);
                 else 
-                    bulkCopyConfig = SmartBulkCopyConfiguration.LoadFromConfigFile();
+                    engine =  new SmartBulkCopy(logger);
                 
-                var sbc = new SmartBulkCopy(bulkCopyConfig, logger);
-                result = await sbc.Copy();
+                result = await engine.Copy();
             }
             catch (Exception ex)
             {

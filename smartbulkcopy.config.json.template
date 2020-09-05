@@ -1,11 +1,14 @@
 {
-    "source":{
+    "engine": "sql-to-sql",
+    "source": {
         "connection-string": "Server=;Initial Catalog=;Connection Timeout=300;"
     },
-    "destination":{
+    "destination": {
         "connection-string": "Server=;Initial Catalog=;Connection Timeout=90;"
     },
-    "tables": ["*"],
+    "tables": [
+        "*"
+    ],
     "options": {
         "tasks": 8,
         "logical-partitions": "auto",

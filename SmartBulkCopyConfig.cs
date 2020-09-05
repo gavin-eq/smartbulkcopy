@@ -108,7 +108,7 @@ namespace SmartBulkCopy
 
         public static SmartBulkCopyConfiguration LoadFromConfigFile()
         {
-            return LoadFromConfigFile("smartbulkcopy.config");
+            return LoadFromConfigFile("smartbulkcopy.config.json");
         }
 
         public static SmartBulkCopyConfiguration LoadFromConfigFile(string configFile)

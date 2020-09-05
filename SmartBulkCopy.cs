@@ -14,7 +14,7 @@ using System.Text.RegularExpressions;
 
 namespace SmartBulkCopy
 {
-    class SmartBulkCopy
+    class SmartBulkCopy: EngineBase
     {
         // Added all error code listed here: "https://docs.microsoft.com/en-us/azure/sql-database/sql-database-develop-error-messages"
         // Added Error Code 0 to automatically handle killed connections
@@ -30,7 +30,6 @@ namespace SmartBulkCopy
         private readonly List<int> _transientErrors = new List<int>() { 0, 53, 121, 258, 4891, 10054, 4060, 40197, 40501, 40613, 49918, 49919, 49920, 10054, 11001, 10065, 10060, 10051};
         private int _maxAttempts = 5;
         private int _delay = 10; // seconds
-        private readonly ILogger _logger;
         private readonly SmartBulkCopyConfiguration _config;
         private readonly Stopwatch _stopwatch = new Stopwatch();
         private readonly ConcurrentQueue<CopyInfo> _queue = new ConcurrentQueue<CopyInfo>();
@@ -39,17 +38,22 @@ namespace SmartBulkCopy
         private long _runningTasks = 0;
         private long _erroredTasks = 0;
 
-        public SmartBulkCopy(SmartBulkCopyConfiguration config, ILogger logger)
+        public SmartBulkCopy(ILogger logger): this(string.Empty, logger)
+        {}
+
+        public SmartBulkCopy(string configFile, ILogger logger): base(logger)
         {
-            _logger = logger;
-            _config = config;
+            if (string.IsNullOrEmpty(configFile))
+                _config = SmartBulkCopyConfiguration.LoadFromConfigFile();
+            else                 
+                _config = SmartBulkCopyConfiguration.LoadFromConfigFile(configFile);
 
             var v = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version.ToString();
 
             _logger.Info($"SmartBulkCopy engine v. {v}");
         }
 
-        public async Task<int> Copy()
+        public override async Task<int> Copy()
         {
             return await Copy(_config.TablesToCopy);
         }
