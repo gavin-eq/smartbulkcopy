@@ -706,11 +706,7 @@ namespace SmartBulkCopy
                                     var oc = copyInfo.SourceTableInfo.PrimaryIndex.Columns.OrderBy(c => c.OrdinalPosition);
                                     foreach (var ii in oc)
                                     {
-                                        // If the order column is in the column list, then allow it, else skip it (for example when the primary key is a calculated column)
-                                        if (copyInfo.Columns.Contains(ii.ColumnName))
-                                        {
-                                            bulkCopy.ColumnOrderHints.Add(ii.ColumnName, ii.IsDescending ? SortOrder.Descending : SortOrder.Ascending);
-                                        }
+                                        bulkCopy.ColumnOrderHints.Add(ii.ColumnName, ii.IsDescending ? SortOrder.Descending : SortOrder.Ascending);
                                     }
                                 }
                                 if (copyInfo.OrderHintType == OrderHintType.PartionKeyOnly)
