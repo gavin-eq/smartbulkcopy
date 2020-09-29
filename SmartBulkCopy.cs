@@ -128,6 +128,8 @@ namespace SmartBulkCopy
             var tiSource = await ti1;
             var tiDestination = await ti2;
 
+            var tablesMissingOnDestination = new List<String>();
+            
             _logger.Info("Analyzing tables...");
             var copyInfo = new List<CopyInfo>();
             foreach (var t in internalTablesToCopy)
@@ -146,6 +148,13 @@ namespace SmartBulkCopy
                 }
                 if (destinationTable.Exists == false)
                 {
+                    if (_config.IgnoreMissingDestinationTables)
+                    {
+                        _logger.Warn($"Table {t} does not exists on destination. Ignoring because [ignore-missing-destination-tables] option is set to true.");
+                        tablesMissingOnDestination.Add(t);
+                        continue;
+                    }
+                    
                     _logger.Error($"Table {t} does not exists on destination.");
                     return 1;
                 }
@@ -302,8 +311,17 @@ namespace SmartBulkCopy
                 _logger.Info($"{t} -> Analysis result: usePartioning={usePartitioning}, partitionType={partitionType}, orderHintType={orderHintType}");
             }
 
-            _logger.Info("Enqueueing work...");
-            copyInfo.ForEach(ci => _queue.Enqueue(ci));
+            if (tablesMissingOnDestination.Count > 0)
+            {
+                _logger.Info($"{tablesMissingOnDestination.Count} tables are being ignored because they are missing in the destination database.");
+            }
+            
+            // Remove the tables which are not present in the destination from the list of tables to copy
+            internalTablesToCopy = internalTablesToCopy.Where(x => !tablesMissingOnDestination.Contains(x)).ToList();
+
+            _logger.Info($"Enqueueing work...");
+            // Enqueue copy tasks for all tables not missing on the destination
+            copyInfo.Where(x => !tablesMissingOnDestination.Contains(x.TableName)).ToList().ForEach(ci => _queue.Enqueue(ci));
             _logger.Info($"{_queue.Count} items enqueued.");
 
             if (_config.TruncateTables)
@@ -604,7 +622,6 @@ namespace SmartBulkCopy
 
                     if (!(copyInfo is NoPartitionsCopyInfo))
                         bulkLoadMessage += $" partition {copyInfo.PartitionNumber}";
-
                     if (copyInfo.GetOrderBy().Trim() != string.Empty)
                         bulkLoadMessage += $" (OrderBy: {copyInfo.GetOrderBy()})";
 
@@ -689,7 +706,11 @@ namespace SmartBulkCopy
                                     var oc = copyInfo.SourceTableInfo.PrimaryIndex.Columns.OrderBy(c => c.OrdinalPosition);
                                     foreach (var ii in oc)
                                     {
-                                        bulkCopy.ColumnOrderHints.Add(ii.ColumnName, ii.IsDescending ? SortOrder.Descending : SortOrder.Ascending);
+                                        // If the order column is in the column list, then allow it, else skip it (for example when the primary key is a calculated column)
+                                        if (copyInfo.Columns.Contains(ii.ColumnName))
+                                        {
+                                            bulkCopy.ColumnOrderHints.Add(ii.ColumnName, ii.IsDescending ? SortOrder.Descending : SortOrder.Ascending);
+                                        }
                                     }
                                 }
                                 if (copyInfo.OrderHintType == OrderHintType.PartionKeyOnly)

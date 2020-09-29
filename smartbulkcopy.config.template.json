@@ -14,6 +14,7 @@
         "logical-partitions": "auto",
         "batch-size": 100000,
         "truncate-tables": true,
+        "ignore-missing-destination-tables": false,
         "safe-check": "readonly",
         "stop-if": {
             "secondary-indexes": true,

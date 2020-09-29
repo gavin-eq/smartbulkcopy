@@ -110,6 +110,8 @@ namespace SmartBulkCopy
         
         public int RetryDelayIncrement = 10;
 
+        public bool IgnoreMissingDestinationTables = false;
+
         private SmartBulkCopyConfiguration() {}
 
         public static SmartBulkCopyConfiguration LoadFromConfigFile()
@@ -140,6 +142,7 @@ namespace SmartBulkCopy
             sbcc.TruncateTables = bool.Parse(config?["options:truncate-tables"] ?? sbcc.TruncateTables.ToString());
             sbcc.RetryMaxAttempt = int.Parse(config?["options:retry-connection:max-attempt"] ?? sbcc.RetryMaxAttempt.ToString());
             sbcc.RetryDelayIncrement = int.Parse(config?["options:retry-connection:delay-increment"] ?? sbcc.RetryDelayIncrement.ToString());
+            sbcc.IgnoreMissingDestinationTables = bool.Parse(config?["options:ignore-missing-destination-tables"] ?? sbcc.TruncateTables.ToString());
             
             var logicalPartitions = (config?["options:logical-partitions"] ?? String.Empty).ToLower().Trim();
             int logicalPartitionSizeOrCount = 0;
